@@ -4,9 +4,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.res.TypedArray;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -15,6 +18,8 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.TextView;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     private byte quantity = 0;
@@ -31,23 +36,59 @@ public class MainActivity extends AppCompatActivity {
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
     private boolean isTakeAway;
     public static final String EXTRA_DELIVERY_OPT = "DELIVERYOPT";
+    private RecyclerView recyclerView;
+    private ArrayList<Dish> dishes = new ArrayList<>();
 
+    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        quantityTextView = findViewById(R.id.quantityTextView);
+        recyclerView = findViewById(R.id.main_recyclerView);
+        recyclerView.setHasFixedSize(true);
+        dishes.addAll(getDishes());
+        showRecyclerList();
+
+
+
+//        quantityTextView = findViewById(R.id.quantityTextView);
         chefNoteEditText = findViewById(R.id.chefNote_editText);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         Log.d(LOG_TAG, "onCreate");
 
 
-        if (savedInstanceState != null) {
-            quantity = savedInstanceState.getByte("SAVED_QUANTITY");
-            quantityTextView.setText(Byte.toString(quantity));
-        }
+//        if (savedInstanceState != null) {
+//            quantity = savedInstanceState.getByte("SAVED_QUANTITY");
+//            quantityTextView.setText(Byte.toString(quantity));
+//        }
 
+    }
+    private void showRecyclerList() {
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        DishesAdapter dishAdapter = new DishesAdapter(dishes);
+        recyclerView.setAdapter(dishAdapter);
+    }
+    private ArrayList<Dish> getDishes() {
+        String[] dataName = getResources().getStringArray(R.array.names);
+        String[] dataDescription =
+                getResources().getStringArray(R.array.descriptions);
+        int[] dataQuantity =
+                getResources().getIntArray(R.array.quantities);
+        int[] dataPrice = getResources().getIntArray(R.array.prices);
+        TypedArray dataPhoto =
+                getResources().obtainTypedArray(R.array.images);
+        ArrayList<Dish> dishes = new ArrayList<>();
+        for (int i = 0; i < dataName.length; i++) {
+            Dish dish = new Dish();
+            dish.setName(dataName[i]);
+            dish.setDescription(dataDescription[i]);
+            dish.setQuantity(dataQuantity[i]);
+            dish.setPrice(dataPrice[i]);
+            dish.setPhoto(dataPhoto.getResourceId(i, -1));
+            dishes.add(dish);
+        }
+        return dishes;
     }
 
     @Override
@@ -140,9 +181,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void showCart(View view) {
+        chefNote = chefNoteEditText.getText().toString();
         isTakeAway = true;
         Intent intent = new Intent(this, CartActivity.class);
+        intent.putExtra(EXTRA_CHEF_NOTE, chefNote);
         intent.putExtra(EXTRA_DELIVERY_OPT, isTakeAway);
+        intent.putExtra("DISHES", dishes);
         startActivity(intent);
     }
 
@@ -155,4 +199,5 @@ public class MainActivity extends AppCompatActivity {
             if (radioChecked) isTakeAway = true;
         }
     }
+
 }
